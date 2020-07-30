@@ -1,31 +1,25 @@
 import pyaudio
 import numpy
-import scipy.io.wavfile as wav
 import paho.mqtt.client as mqtt
 import wave
 import scipy.io.wavfile as wavfile
 import time
 
 REPLAY = False
+filename = None
 TOPIC_SOUND = "raspberry/audio/sound"
 TOPIC_REPLAY = "raspberry/audio/replay"
-TOPIC_REALTIME = "raspberry/audio/realtime"
 
 def on_message_replay(client, userdata, message):
     global REPLAY
+    global filename
     msg = message.payload.decode("utf-8")
-    if msg == "true":
-        REPLAY = True
-    else :
+    if msg == "false":
         REPLAY = False
+    else :
+        REPLAY = True
+        filename = msg
     print("REPLAYING", flush=True)
-
-
-# def on_message_realtime(client, userdata, message):
-#     global REPLAY
-#     REPLAY = False
-#     print("Realtime", flush=True)
-
 
 # MQTT
 HOST_NAME = "localhost"
@@ -47,7 +41,6 @@ client = mqtt.Client("record", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
 client.message_callback_add(TOPIC_REPLAY, on_message_replay)
-# client.message_callback_add(TOPIC_REALTIME, on_message_realtime)
 print("Connected to MQQT", flush=True)
 client.subscribe("raspberry/audio/#", qos=0)
 # 
@@ -71,7 +64,6 @@ while True :
         numpydata = numpy.hstack(frames)
         client.publish(TOPIC_SOUND, numpydata.tobytes())
     else :
-        filename = "out.wav"
         fs_rate, s = wavfile.read(filename)
         # slice signal by fs_rate samples (1s duration)
         samples = len(s)//fs_rate

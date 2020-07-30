@@ -75,7 +75,8 @@ def on_message_record(client, userdata, message):
         newwav.setframerate(RATE)
     elif(msg == "stop record"):
         RECORD = False
-        newwav.close()
+        if newwav != None:
+            newwav.close()
 
 client = mqtt.Client("process", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
