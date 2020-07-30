@@ -84,7 +84,6 @@ client.message_callback_add(TOPIC_SOUND, on_message_sound)
 client.message_callback_add(TOPIC_RECORD, on_message_record)
 print("Connected to MQQT", flush=True)
 client.subscribe("raspberry/audio/#", qos=0)
-# client.loop_start()
 
 # 
 def butter_highpass(cutoff, fs, order=5):
@@ -166,6 +165,4 @@ def process_audio(signal, channel, fs_rate, period=10, lpass_cutoff=6000, hpass_
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-# while True:
-#     print("Mean processing time per chunk : " + str(numpy.mean(elapsed_time)))
 client.loop_forever()
