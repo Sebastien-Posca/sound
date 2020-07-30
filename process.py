@@ -9,11 +9,11 @@ import sys
 import wave
 
 HOST_NAME = "localhost"
-TOPIC_SOUND = "raspberry/audio/sound"
-TOPIC_RECORD = "raspberry/audio/record"
-TOPIC_ZCR = "raspberry/audio/zcr"
-TOPIC_MFCC = "raspberry/audio/mfcc"
-TOPIC_TIME = "raspberry/audio/time"
+TOPIC_SOUND = "audio/sound"
+TOPIC_RECORD = "audio/record"
+TOPIC_ZCR = "audio/zcr"
+TOPIC_MFCC = "audio/mfcc"
+TOPIC_TIME = "audio/time"
 
 elapsed_time = []
 CHANNELS = 2
@@ -84,7 +84,7 @@ client.on_disconnect = on_disconnect
 client.message_callback_add(TOPIC_SOUND, on_message_sound)
 client.message_callback_add(TOPIC_RECORD, on_message_record)
 print("Connected to MQQT", flush=True)
-client.subscribe("raspberry/audio/#", qos=0)
+client.subscribe("audio/#", qos=0)
 
 # 
 def butter_highpass(cutoff, fs, order=5):

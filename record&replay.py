@@ -7,8 +7,9 @@ import time
 
 REPLAY = False
 filename = None
-TOPIC_SOUND = "raspberry/audio/sound"
-TOPIC_REPLAY = "raspberry/audio/replay"
+TOPIC_SOUND = "audio/sound"
+TOPIC_REPLAY = "audio/replay"
+TOPIC_RECORD = "audio/record"
 
 def on_message_replay(client, userdata, message):
     global REPLAY
@@ -42,7 +43,7 @@ client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
 client.message_callback_add(TOPIC_REPLAY, on_message_replay)
 print("Connected to MQQT", flush=True)
-client.subscribe("raspberry/audio/#", qos=0)
+client.subscribe(TOPIC_REPLAY, qos=0)
 # 
 RATE=44100
 RECORD_SECONDS = 1
@@ -67,7 +68,7 @@ while True :
         fs_rate, s = wavfile.read(filename)
         # slice signal by fs_rate samples (1s duration)
         samples = len(s)//fs_rate
-        client.publish("raspberry/audio/record", "record")
+        client.publish(TOPIC_RECORD, "record")
         for i in range(samples): 
             if REPLAY == False:
                 break
@@ -76,6 +77,6 @@ while True :
             numpydata = numpy.hstack(s[start:stop])
             client.publish(TOPIC_SOUND, numpydata.tobytes())
             # time.sleep(1)
-        client.publish("raspberry/audio/record", "stop record")
+        client.publish(TOPIC_RECORD, "stop record")
         REPLAY = False
         print("REPLAYING OVER", flush=True)
