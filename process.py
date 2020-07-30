@@ -1,6 +1,4 @@
-import pyaudio
 import numpy
-import scipy.io.wavfile as wavfile
 import numpy as np
 import librosa
 import time
@@ -8,18 +6,25 @@ from scipy.signal import lfilter, butter, filtfilt
 import paho.mqtt.client as mqtt
 import signal
 import sys
+import wave
 
 HOST_NAME = "localhost"
 elapsed_time = []
 CHANNELS = 2
 RATE = 44100
-n = 0
-wavtab = None
 
+newwav =wave.open("test.wav", "wb")
+newwav.setnchannels(CHANNELS)
+newwav.setsampwidth(2) #to check
+newwav.setframerate(RATE)
 
 def signal_handler(sig, frame):
+    global newwav
     print("SIGINT received !")
+    newwav.close()
     sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def on_disconnect(client, userdata, rc):
@@ -34,26 +39,16 @@ def on_disconnect(client, userdata, rc):
         print("Reconnected")
     except:
         print("Error in Retrying to Connect with Broker")
+
 def on_message(client, userdata, message):
     global elapsed_time
     global CHANNELS
     global RATE
-    global n
-    global wavtab
+    global newwav
     print("msg received", flush=True)
-    n = n+1
     deserialized = numpy.frombuffer(message.payload, dtype=numpy.int16)
     s = deserialized.reshape(-1, CHANNELS)
-    print(str(wavtab), flush=True)
-    print("test", flush=True)
-    if n == 1:
-        wavtab = s
-        print("create", flush=True)
-
-    if n > 1:
-        print("append", flush=True)
-        wavtab = numpy.append(wavtab, s, axis = 0)
-    wavfile.write('out.wav',RATE, wavtab)
+    newwav.writeframesraw(s)
     zcr, mfcc = process_audio(s, 0, RATE, 10)
     with open("out.txt", "a") as myfile:
         myfile.write('zcr = '+str(zcr) + ', mfcc = ' + str(mfcc) +', elapsed time = '+ str(elapsed_time[-1]) + '\n')
