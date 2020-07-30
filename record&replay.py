@@ -17,10 +17,11 @@ def on_message_replay(client, userdata, message):
     msg = message.payload.decode("utf-8")
     if msg == "false":
         REPLAY = False
+        print("Replay Stropped", flush=True)
     else :
         REPLAY = True
         filename = msg
-    print("REPLAYING", flush=True)
+        print("Replaying", flush=True)
 
 # MQTT
 HOST_NAME = "localhost"
@@ -79,4 +80,4 @@ while True :
             # time.sleep(1)
         client.publish(TOPIC_RECORD, "stop record")
         REPLAY = False
-        print("REPLAYING OVER", flush=True)
+        print("Replaying is Over", flush=True)
