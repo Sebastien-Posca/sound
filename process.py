@@ -9,19 +9,19 @@ import sys
 import wave
 
 HOST_NAME = "localhost"
-TOPIC_SEND_AUDIO = "raspberry/audio/sound"
-TOPIC_SEND_ZCR = "raspberry/audio/zcr"
-TOPIC_SEND_MFCC = "raspberry/audio/mfcc"
-TOPIC_SEND_TIME = "raspberry/audio/time"
+TOPIC_SOUND = "raspberry/audio/sound"
+TOPIC_RECORD = "raspberry/audio/record"
+TOPIC_ZCR = "raspberry/audio/zcr"
+TOPIC_MFCC = "raspberry/audio/mfcc"
+TOPIC_TIME = "raspberry/audio/time"
 
 elapsed_time = []
 CHANNELS = 2
 RATE = 44100
+RECORD = False
 
-newwav =wave.open("test.wav", "wb")
-newwav.setnchannels(CHANNELS)
-newwav.setsampwidth(2) #to check
-newwav.setframerate(RATE)
+n = 0
+newwav = None
 
 def signal_handler(sig, frame):
     global newwav
@@ -45,26 +45,45 @@ def on_disconnect(client, userdata, rc):
     except:
         print("Error in Retrying to Connect with Broker")
 
-def on_message(client, userdata, message):
+def on_message_sound(client, userdata, message):
     global elapsed_time
     global CHANNELS
     global RATE
     global newwav
-    print("msg received", flush=True)
+    global RECORD
     deserialized = numpy.frombuffer(message.payload, dtype=numpy.int16)
     s = deserialized.reshape(-1, CHANNELS)
-    newwav.writeframesraw(s)
+    if RECORD == True:
+        newwav.writeframesraw(s)
     zcr, mfcc = process_audio(s, 0, RATE, 10)
-    client.publish(TOPIC_SEND_ZCR, zcr)
-    client.publish(TOPIC_SEND_MFCC, mfcc)
-    client.publish(TOPIC_SEND_TIME, elapsed_time[-1])
+    client.publish(TOPIC_ZCR, zcr)
+    client.publish(TOPIC_MFCC, mfcc)
+    client.publish(TOPIC_TIME, elapsed_time[-1])
+
+def on_message_record(client, userdata, message):
+    global RECORD
+    global n
+    global newwav
+    msg = message.payload.decode("utf-8")
+    print("msg received = "+msg, flush=True)
+    if(msg == "record"):
+        RECORD = True
+        n = n + 1
+        newwav = wave.open("out"+str(n)+".wav", "wb")
+        newwav.setnchannels(CHANNELS)
+        newwav.setsampwidth(2) #to check
+        newwav.setframerate(RATE)
+    elif(msg == "stop record"):
+        RECORD = False
+        newwav.close()
 
 client = mqtt.Client("process", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
-client.on_message = on_message
+client.message_callback_add(TOPIC_SOUND, on_message_sound)
+client.message_callback_add(TOPIC_RECORD, on_message_record)
 print("Connected to MQQT", flush=True)
-client.subscribe(TOPIC_SEND_AUDIO, qos=0)
+client.subscribe("raspberry/audio/#", qos=0)
 # client.loop_start()
 
 # 
