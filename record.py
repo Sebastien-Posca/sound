@@ -18,7 +18,7 @@ def on_disconnect(client, userdata, rc):
     except:
         print("Error in Retrying to Connect with Broker")
 	
-TOPIC_SEND_AUDIO = "raspberry/audio"
+TOPIC_SEND_AUDIO = "raspberry/audio/sound"
 client = mqtt.Client("record", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect

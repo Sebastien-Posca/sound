@@ -9,6 +9,11 @@ import sys
 import wave
 
 HOST_NAME = "localhost"
+TOPIC_SEND_AUDIO = "raspberry/audio/sound"
+TOPIC_SEND_ZCR = "raspberry/audio/zcr"
+TOPIC_SEND_MFCC = "raspberry/audio/mfcc"
+TOPIC_SEND_TIME = "raspberry/audio/time"
+
 elapsed_time = []
 CHANNELS = 2
 RATE = 44100
@@ -50,10 +55,10 @@ def on_message(client, userdata, message):
     s = deserialized.reshape(-1, CHANNELS)
     newwav.writeframesraw(s)
     zcr, mfcc = process_audio(s, 0, RATE, 10)
-    with open("out.txt", "a") as myfile:
-        myfile.write('zcr = '+str(zcr) + ', mfcc = ' + str(mfcc) +', elapsed time = '+ str(elapsed_time[-1]) + '\n')
+    client.publish(TOPIC_SEND_ZCR, zcr)
+    client.publish(TOPIC_SEND_MFCC, mfcc)
+    client.publish(TOPIC_SEND_TIME, elapsed_time[-1])
 
-TOPIC_SEND_AUDIO = "raspberry/audio"
 client = mqtt.Client("process", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
