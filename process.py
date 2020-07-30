@@ -1,19 +1,25 @@
 import pyaudio
 import numpy
-import scipy.io.wavfile as wav
 import scipy.io.wavfile as wavfile
 import numpy as np
 import librosa
 import time
-
-from scipy.signal import lfilter
-from scipy.signal import butter, filtfilt
-
-# MQTT 
+from scipy.signal import lfilter, butter, filtfilt
 import paho.mqtt.client as mqtt
+import signal
+import sys
 
 HOST_NAME = "localhost"
 elapsed_time = []
+CHANNELS = 2
+RATE = 44100
+n = 0
+wavtab = None
+
+
+def signal_handler(sig, frame):
+    print("SIGINT received !")
+    sys.exit(0)
 
 
 def on_disconnect(client, userdata, rc):
@@ -30,15 +36,26 @@ def on_disconnect(client, userdata, rc):
         print("Error in Retrying to Connect with Broker")
 def on_message(client, userdata, message):
     global elapsed_time
-    print("received message =", flush=True)    
-    deserialized = numpy.frombuffer(message.payload, dtype=numpy.int16) #Deserialization de tableau de bytes à tableau numpy
-    s = deserialized.reshape(-1, 2) #Pour remettre le tableau en 2 dimensions => 2 = nombre de channel et -1 taille de la liste
-    # print(s)
-    # start = 44100
-    # stop  = start + 44100 - 1 
-    # wav.write('out.wav',44100,s)
-    zcr, mfcc = process_audio(s, 0, 44100, 10)
-    with open("Output.txt", "a") as myfile:
+    global CHANNELS
+    global RATE
+    global n
+    global wavtab
+    print("msg received", flush=True)
+    n = n+1
+    deserialized = numpy.frombuffer(message.payload, dtype=numpy.int16)
+    s = deserialized.reshape(-1, CHANNELS)
+    print(str(wavtab), flush=True)
+    print("test", flush=True)
+    if n == 1:
+        wavtab = s
+        print("create", flush=True)
+
+    if n > 1:
+        print("append", flush=True)
+        wavtab = numpy.append(wavtab, s, axis = 0)
+    wavfile.write('out.wav',RATE, wavtab)
+    zcr, mfcc = process_audio(s, 0, RATE, 10)
+    with open("out.txt", "a") as myfile:
         myfile.write('zcr = '+str(zcr) + ', mfcc = ' + str(mfcc) +', elapsed time = '+ str(elapsed_time[-1]) + '\n')
 
 TOPIC_SEND_AUDIO = "raspberry/audio"
@@ -47,8 +64,9 @@ client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
 client.on_message = on_message
 print("Connected to MQQT", flush=True)
-client.loop_start()
 client.subscribe(TOPIC_SEND_AUDIO, qos=0)
+# client.loop_start()
+
 # 
 def butter_highpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
@@ -129,7 +147,6 @@ def process_audio(signal, channel, fs_rate, period=10, lpass_cutoff=6000, hpass_
 
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-while True:
-    # True
-    print("Mean processing time per chunk : " + str(numpy.mean(elapsed_time)))
+# while True:
+#     print("Mean processing time per chunk : " + str(numpy.mean(elapsed_time)))
+client.loop_forever()

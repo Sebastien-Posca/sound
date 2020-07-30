@@ -1,13 +1,10 @@
 import pyaudio
 import numpy
 import scipy.io.wavfile as wav
-
-
-# MQTT 
 import paho.mqtt.client as mqtt
 
+# MQTT
 HOST_NAME = "localhost"
-
 def on_disconnect(client, userdata, rc):
     print("Client Got Disconnected")
     if rc != 0:
@@ -31,10 +28,11 @@ print("Connected to MQQT", flush=True)
 RATE=44100
 RECORD_SECONDS = 1
 CHUNKSIZE = 1024
+CHANNELS = 2
 
 # initialize portaudio
 p = pyaudio.PyAudio()
-stream = p.open(format=pyaudio.paInt16, channels=2, rate=RATE, input=True, frames_per_buffer=CHUNKSIZE)
+stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNKSIZE)
 while True :
     frames = [] # A python-list of chunks(numpy.ndarray)
     for _ in range(0, int(RATE / CHUNKSIZE * RECORD_SECONDS)):
