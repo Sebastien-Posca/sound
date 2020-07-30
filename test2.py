@@ -13,32 +13,18 @@ TOPIC_REALTIME = "raspberry/audio/realtime"
 
 def on_message_replay(client, userdata, message):
     global REPLAY
-    REPLAY = True
-    client2 = mqtt.Client("replay", clean_session=True)
-    client2.connect(HOST_NAME, 1883, keepalive=1800 )
+    msg = message.payload.decode("utf-8")
+    if msg == "true":
+        REPLAY = True
+    else :
+        REPLAY = False
     print("REPLAYING", flush=True)
-    client2.publish("raspberry/audio/record", "stop record", 0)
-    filename = "./out.wav"
-    fs_rate, s = wavfile.read(filename)
-    # slice signal by fs_rate samples (1s duration)
-    samples = len(s)//fs_rate
-    client2.publish("raspberry/audio/record", "record", 0)
-    for i in range(samples): 
-        start = i*fs_rate
-        stop  = start + fs_rate - 1 
-        numpydata = numpy.hstack(s[start:stop])
-        client2.publish(TOPIC_SOUND, numpydata.tobytes())
-        time.sleep(1)
- 
-    print("REPLAYING OVER", flush=True)
-    client2.publish("raspberry/audio/record", "stop record", 0)
-    client2.publish("raspberry/audio/realtime", " ", 0)
 
 
-def on_message_realtime(client, userdata, message):
-    global REPLAY
-    REPLAY = False
-    print("Realtime", flush=True)
+# def on_message_realtime(client, userdata, message):
+#     global REPLAY
+#     REPLAY = False
+#     print("Realtime", flush=True)
 
 
 # MQTT
@@ -61,7 +47,7 @@ client = mqtt.Client("record", clean_session=True)
 client.connect(HOST_NAME, 1883, keepalive=1800 )
 client.on_disconnect = on_disconnect
 client.message_callback_add(TOPIC_REPLAY, on_message_replay)
-client.message_callback_add(TOPIC_REALTIME, on_message_realtime)
+# client.message_callback_add(TOPIC_REALTIME, on_message_realtime)
 print("Connected to MQQT", flush=True)
 client.subscribe("raspberry/audio/#", qos=0)
 # 
@@ -75,7 +61,7 @@ p = pyaudio.PyAudio()
 stream = p.open(format=pyaudio.paInt16, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNKSIZE)
 client.loop_start()
 while True :
-    print(REPLAY)
+    # print(REPLAY)
     if REPLAY == False:
         frames = [] # A python-list of chunks(numpy.ndarray)
         for _ in range(0, int(RATE / CHUNKSIZE * RECORD_SECONDS)):
@@ -84,3 +70,20 @@ while True :
         #Convert the list of numpy-arrays into a 1D array (column-wise)
         numpydata = numpy.hstack(frames)
         client.publish(TOPIC_SOUND, numpydata.tobytes())
+    else :
+        filename = "out.wav"
+        fs_rate, s = wavfile.read(filename)
+        # slice signal by fs_rate samples (1s duration)
+        samples = len(s)//fs_rate
+        client.publish("raspberry/audio/record", "record")
+        for i in range(samples): 
+            if REPLAY == False:
+                break
+            start = i*fs_rate
+            stop  = start + fs_rate - 1 
+            numpydata = numpy.hstack(s[start:stop])
+            client.publish(TOPIC_SOUND, numpydata.tobytes())
+            # time.sleep(1)
+        client.publish("raspberry/audio/record", "stop record")
+        REPLAY = False
+        print("REPLAYING OVER", flush=True)
