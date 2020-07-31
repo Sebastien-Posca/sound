@@ -7,6 +7,7 @@ import paho.mqtt.client as mqtt
 import signal
 import sys
 import wave
+import os
 
 HOST_NAME = "localhost"
 TOPIC_SOUND = "audio/sound"
@@ -69,6 +70,8 @@ def on_message_record(client, userdata, message):
     if(msg == "record"):
         RECORD = True
         n = n + 1
+        while os.path.isfile("out"+str(n)+".wav") == True:
+            n = n + 1
         newwav = wave.open("out"+str(n)+".wav", "wb")
         newwav.setnchannels(CHANNELS)
         newwav.setsampwidth(2) #to check
