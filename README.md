@@ -1,4 +1,4 @@
-# Dependencies
+# Sound Analysis
 
 ## Needed python packages
 
