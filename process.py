@@ -10,11 +10,11 @@ import wave
 import os
 
 HOST_NAME = "localhost"
-TOPIC_SOUND = "audio/sound"
-TOPIC_RECORD = "audio/record"
-TOPIC_ZCR = "audio/zcr"
-TOPIC_MFCC = "audio/mfcc"
-TOPIC_TIME = "audio/time"
+TOPIC_SOUND = "enact/actuators/microphone/sound"
+TOPIC_RECORD = "enact/actuators/microphone/record"
+TOPIC_ZCR = "enact/actuators/microphone/zcr"
+TOPIC_MFCC = "enact/actuators/microphone/mfcc"
+TOPIC_TIME = "enact/actuators/microphone/time"
 
 elapsed_time = []
 CHANNELS = 2
@@ -87,7 +87,7 @@ client.on_disconnect = on_disconnect
 client.message_callback_add(TOPIC_SOUND, on_message_sound)
 client.message_callback_add(TOPIC_RECORD, on_message_record)
 print("Connected to MQQT", flush=True)
-client.subscribe("audio/#", qos=0)
+client.subscribe("enact/actuators/microphone/#", qos=0)
 
 # 
 def butter_highpass(cutoff, fs, order=5):
