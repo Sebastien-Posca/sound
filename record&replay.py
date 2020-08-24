@@ -7,9 +7,9 @@ import time
 
 REPLAY = False
 filename = None
-TOPIC_SOUND = "audio/sound"
-TOPIC_REPLAY = "audio/replay"
-TOPIC_RECORD = "audio/record"
+TOPIC_SOUND = "enact/actuators/microphone/sound"
+TOPIC_REPLAY = "enact/actuators/microphone/replay"
+TOPIC_RECORD = "enact/actuators/microphone/record"
 
 def on_message_replay(client, userdata, message):
     global REPLAY
